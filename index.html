@@ -15,10 +15,17 @@
     <div id="app" class="p-4 max-w-2xl mx-auto space-y-6"></div>
 
     <script>
+        // ============================================
+        // CONFIGURATION - Set your URLs here
+        // ============================================
+        var DEFAULT_WEBHOOK_URL = 'YOUR_WEBHOOK_URL_HERE';
+        var DEFAULT_SHEET_URL = 'YOUR_GOOGLE_SHEET_URL_HERE';
+        // ============================================
+
         var state = {
             config: { 
-                webhookUrl: '',
-                sheetUrl: ''
+                webhookUrl: DEFAULT_WEBHOOK_URL,
+                sheetUrl: DEFAULT_SHEET_URL
             },
             studyMaterials: {},
             selectedMaterial: '',
@@ -49,17 +56,35 @@
         }
 
         function loadConfig() {
+            // First set defaults
+            if (!state.config.webhookUrl && DEFAULT_WEBHOOK_URL !== 'YOUR_WEBHOOK_URL_HERE') {
+                state.config.webhookUrl = DEFAULT_WEBHOOK_URL;
+            }
+            if (!state.config.sheetUrl && DEFAULT_SHEET_URL !== 'YOUR_GOOGLE_SHEET_URL_HERE') {
+                state.config.sheetUrl = DEFAULT_SHEET_URL;
+            }
+            
+            // Then check localStorage for overrides
             if (!isLocalStorageAvailable()) {
                 console.log('localStorage not available in this environment');
+                // Auto-load materials if webhook URL is set
+                if (state.config.webhookUrl) {
+                    fetchMaterials(state.config.webhookUrl);
+                }
                 return;
             }
             
             var saved = localStorage.getItem('studyTrackerConfig');
             if (saved) {
-                state.config = JSON.parse(saved);
-                if (state.config.webhookUrl) {
-                    fetchMaterials(state.config.webhookUrl);
-                }
+                var savedConfig = JSON.parse(saved);
+                // Override defaults with saved config if present
+                if (savedConfig.webhookUrl) state.config.webhookUrl = savedConfig.webhookUrl;
+                if (savedConfig.sheetUrl) state.config.sheetUrl = savedConfig.sheetUrl;
+            }
+            
+            // Auto-load materials if webhook URL is configured
+            if (state.config.webhookUrl && state.config.webhookUrl !== 'YOUR_WEBHOOK_URL_HERE') {
+                fetchMaterials(state.config.webhookUrl);
             }
         }
 
